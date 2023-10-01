@@ -1,59 +1,56 @@
-@description('Required. Name of the Azure Bastion resource.')
-param name string
+targetScope = 'subscription'
 
-@description('Optional. Location for all resources.')
-param location string = resourceGroup().location
+param resourceGroupName string
+param virtualNetworkName string
+param location string
 
-@description('Optional. Choose to disable or enable Copy Paste.')
-param disableCopyPaste bool = false
+// Parameters specific for Azure Virtual Network
+param addressPrefixes array = [
+  '192.168.2.0/24'
+]
 
-@description('Optional. Choose to disable or enable File Copy.')
-param enableFileCopy bool = true
-
-@description('Optional. Choose to disable or enable IP Connect.')
-param enableIpConnect bool = false
-
-@description('Optional. Choose to disable or enable Kerberos authentication.')
-param enableKerberos bool = false
-
-@description('Optional. Choose to disable or enable Shareable Link.')
-param enableShareableLink bool = false
-
-@description('Optional. Choose to disable or enable tunneling.')
-param enableTunneling bool = false
-
-@description('Optional. The scale units for the Bastion Host resource.')
-param scaleUnits int = 2
-
-resource bastionHost 'Microsoft.Network/bastionHosts@2023-04-01' = {
-  name: name
-  location: location
-  sku: {
-    name: 'Standard'
+param subnets array = [
+  {
+    name: 'AzureBastionSubnet'
+    addressPrefix: '192.168.2.0/26'
   }
-  properties: {
-    disableCopyPaste: disableCopyPaste
-    dnsName: 'string'
-    enableFileCopy: enableFileCopy
-    enableIpConnect: enableIpConnect
-    enableKerberos: enableKerberos
-    enableShareableLink: enableShareableLink
-    enableTunneling: enableTunneling
-    ipConfigurations: [
-      {
-        id: 'string'
-        name: 'string'
-        properties: {
-          privateIPAllocationMethod: 'string'
-          publicIPAddress: {
-            id: 'string'
-          }
-          subnet: {
-            id: 'string'
-          }
-        }
-      }
-    ]
-    scaleUnits: scaleUnits
+]
+
+// Paramaters specific for Azure Bastion
+param publicIPName string = 'bpdev-pip-01'
+
+// Deployment section
+resource resourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
+  name: resourceGroupName
+  location: location
+}
+
+module virtualNetwork './modules/virtual-network.bicep' = {
+  name: guid(virtualNetworkName, resourceGroup.id) 
+  scope: resourceGroup
+  params: {
+    name: virtualNetworkName
+    location: location
+    addressPrefixes: addressPrefixes
+    subnets: subnets
   }
 }
+
+module publicIp './modules/public-ip.bicep' = {
+  name: guid(publicIPName, resourceGroup.id) 
+  scope: resourceGroup
+  params: {
+    name: publicIPName
+    location: location
+  }
+}
+// module bastionHost './modules/bastion.bicep' = {
+//   name: 'bastion'
+//   scope: resourceGroup
+//   params: {
+//     name: 'bpdev-bast-01'
+//     location: location
+//     publicIpId: publicIp.outputs.resourceId
+//     vNetId: 'string'
+//   }
+// }
