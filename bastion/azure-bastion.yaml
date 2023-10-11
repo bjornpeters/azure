@@ -1,0 +1,30 @@
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: directoryPath
+    value: '$(System.DefaultWorkingDirectory)/bastion'
+  - name: location
+    value: 'westeurope'
+
+stages:
+  - stage: azBastion
+    displayName: Azure Bastion
+    jobs:
+      - job: deployAzBas
+        displayName: Azure Bastion
+        steps:
+        - task: AzureCLI@2
+          displayName: 'Azure Bicep'
+          inputs:
+            azureSubscription: 'bpdev-subscription'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              az deployment sub create \
+              --name 'deployAzureBastion-$(Build.BuildId)' \
+              --location $(location)
+              --template-file '$(directoryPath)/main.bicep' \
+              --parameters '$(directoryPath)/main.bicepparam'
