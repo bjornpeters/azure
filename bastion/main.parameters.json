@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "bastionName": {
+      "value": "bpdev-bas-01"
+    },
+    "resourceGroupName": {
+      "value": "bpdev-rg-01"
+    },
+    "virtualNetworkName": {
+      "value": "bpdev-vnet-01"
+    },
+    "location": {
+      "value": "westeurope"
+    },
+    "addressPrefixes": {
+      "value": [
+        "192.168.2.0/24"
+      ]
+    },
+    "publicIPName": {
+      "value": "bpdev-pip-01"
+    },
+    "subnets": {
+      "value": [
+        {
+          "name": "AzureBastionSubnet",
+          "addressPrefix": "192.168.2.0/26"
+        }
+      ]
+    }
+  }
+}
