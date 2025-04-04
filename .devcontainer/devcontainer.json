@@ -24,9 +24,6 @@
 		"ghcr.io/stuartleeks/dev-container-features/azure-cli-persistence:0": {},
 		"ghcr.io/natescherer/devcontainers-custom-features/powershell-resources:1": {
 			"resources": "Az,Microsoft.Graph,Microsoft.Graph.Beta"
-		},
-		"ghcr.io/jlaundry/devcontainer-features/azure-functions-core-tools:1": {
-			"version": "latest"
 		}
 	}
 
