@@ -25,6 +25,13 @@
 		"ghcr.io/natescherer/devcontainers-custom-features/powershell-resources:1": {
 			"resources": "Az,Microsoft.Graph,Microsoft.Graph.Beta"
 		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-bicep"
+			]
+		}
 	}
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
