@@ -1,0 +1,13 @@
+{
+    "tenantId": "b2c3f4e5-6d7e-8a9b-c0d1-e2f3g4h5i6j7",
+    "roles": [
+        {
+            "roleName": "User",
+            "roleId": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6"
+        },
+        {
+            "roleName": "Admin",
+            "roleId": "q7r8s9t0-u1v2-w3x4-y5z6-a7b8c9d0e1f2" // Wat als ik hier nu een rol toevoeg?
+        }
+    ]
+}
