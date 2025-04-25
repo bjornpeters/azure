@@ -29,6 +29,7 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
+				"ms-azure-devops.azure-pipelines",
 				"ms-azuretools.vscode-bicep"
 			]
 		}

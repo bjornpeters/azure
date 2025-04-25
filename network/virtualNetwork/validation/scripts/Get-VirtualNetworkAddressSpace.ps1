@@ -43,7 +43,7 @@ function Get-VirtualNetworkAddressSpace {
         
         [Parameter(Mandatory = $false,
             HelpMessage = "Specifies the parent management group scope to search in.")]
-        [string]$ParentScopeId = "357cc3a1-fb43-40f9-a4ab-2706991b77c6"
+        [string]$ParentScopeId = "357cc3a1-fb43-40f9-a4ab-2706991b77c6" # Set a default Management Group scope.
     )
     begin {
         # Prepare the KQL query to search virtual networks under a management group scope and combine subscription info.
