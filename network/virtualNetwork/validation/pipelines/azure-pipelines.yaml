@@ -1,0 +1,41 @@
+trigger: none # Will not trigger on any changes.
+
+pr:
+    branches:
+        include:
+        - main
+    paths:
+        include:
+        - 'network/virtualNetwork/**'
+
+pool:
+    vmImage: 'ubuntu-latest'
+
+variables:
+    azureSubscription: 'YourAzureSubscriptionConnection' # Replace with your Azure service connection name
+
+stages:
+  - stage: validate
+    displayName: 'Validate Network Configuration'
+    jobs:
+    - job: RunValidation
+      displayName: 'Run Validation Scripts'
+      steps:
+        - checkout: self
+          fetchDepth: 1
+        - task: AzurePowerShell@5
+          displayName: 'Run Network Validation Script'
+          inputs:
+            azureSubscription: $(azureSubscription)
+            scriptType: 'FilePath'
+            scriptPath: '$(Build.SourcesDirectory)/network/virtualNetwork/validation/scripts/Get-AzureCIDR.ps1'
+            azurePowerShellVersion: 'LatestVersion'
+            errorActionPreference: 'Stop'
+            failOnStandardError: true
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publish Validation Results'
+          condition: always()
+          inputs:
+            PathtoPublish: '$(Build.SourcesDirectory)/network/virtualNetwork/validation/results'
+            ArtifactName: 'ValidationResults'
+            publishLocation: 'Container'
