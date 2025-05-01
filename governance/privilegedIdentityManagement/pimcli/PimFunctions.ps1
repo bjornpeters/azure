@@ -117,7 +117,7 @@ function Disconnect-AzPim {
     }
 }
 
-# TODO: Add some verbose logging within this cmdlet.
+# TODO: Add some verbose logging within this cmdlet. Change cmdlet to singular.
 function Get-AzPimRequests {
     [CmdletBinding()]
     param()
@@ -224,11 +224,15 @@ function Show-AzPimRequestDetails {
         [string]$CreatedOn,
         
         [Parameter(Mandatory = $true,
+            HelpMessage = 'Duration of the requested access.')]
+        [string]$Duration,
+        
+        [Parameter(Mandatory = $true,
             HelpMessage = 'Justification provided for the request.')]
         [string]$Justification,
         
         [Parameter(Mandatory = $true,
-            HelpMessage = 'User principal ID of the requestor.')]
+            HelpMessage = 'Display name of the user requesting access.')]
         [string]$PrincipalName,
         
         [Parameter(Mandatory = $true,
@@ -236,34 +240,57 @@ function Show-AzPimRequestDetails {
         [string]$ResourceName,
         
         [Parameter(Mandatory = $true,
-            HelpMessage = 'Type of the resource.')]
+            HelpMessage = 'Type of the resource being accessed.')]
         [string]$ResourceType,
         
         [Parameter(Mandatory = $true,
-            HelpMessage = 'Role definition ID being requested.')]
+            HelpMessage = 'Name of the role being requested.')]
         [string]$RoleDefinitionName,
         
         [Parameter(Mandatory = $true,
+            HelpMessage = 'Start date and time for the requested access.')]
+        [string]$StartDateTime,
+        
+        [Parameter(Mandatory = $true,
             HelpMessage = 'Current status of the request.')]
-        [string]$Status
+        [string]$Status,
+
+        [Parameter(Mandatory = $true,
+            HelpMessage = 'Reference ticket number for the request.')]
+        [string]$TicketNumber,
+
+        [Parameter(Mandatory = $true,
+            HelpMessage = 'Source system for the reference ticket.')]
+        [string]$TicketSystem
     )
-    
-    Write-Host "================= PIM Request Details =================" -ForegroundColor Cyan
-    Write-Host "Role:          $RoleDefinitionName" -ForegroundColor White
-    Write-Host "Resource:      $ResourceName" -ForegroundColor White
-    Write-Host "Resource type: $ResourceType" -ForegroundColor White
-    Write-Host "Requestor:     $PrincipalName" -ForegroundColor White
-    Write-Host "Request time:  $CreatedOn" -ForegroundColor White
-    Write-Host "Reason:        $Justification" -ForegroundColor White
-    Write-Host "Status:        $Status" -ForegroundColor White
-    Write-Host "=======================================================" -ForegroundColor Cyan
+
+    Write-Host "================= PIM Request Details =================" -ForegroundColor 'Cyan'
+    Write-Host ""
+    Write-Host "Request details" -ForegroundColor 'Cyan'
+    Write-Host "Role:          $RoleDefinitionName" -ForegroundColor 'White'
+    Write-Host "Requestor:     $PrincipalName" -ForegroundColor 'White'
+    Write-Host "Resource:      $ResourceName" -ForegroundColor 'White'
+    Write-Host "Resource type: $ResourceType" -ForegroundColor 'White'
+    Write-Host "Request time:  $CreatedOn" -ForegroundColor 'White'
+    Write-Host "Reason:        $Justification" -ForegroundColor 'White'
+    Write-Host "Status:        $Status" -ForegroundColor 'White'
+    Write-Host ""
+    Write-Host "Ticket information" -ForegroundColor 'Cyan'
+    Write-Host "Ticket number: $TicketNumber" -ForegroundColor 'White'
+    Write-Host "Ticket system: $TicketSystem" -ForegroundColor 'White'
+    Write-Host ""
+    Write-Host "Schedule information" -ForegroundColor 'Cyan'
+    Write-Host "Start time:    $StartDateTime" -ForegroundColor 'White'
+    Write-Host "Duration:      $Duration" -ForegroundColor 'White'
+    Write-Host ""
+    Write-Host "=======================================================" -ForegroundColor 'Cyan'
 }
 
 # Function to display the banner
 function Show-Banner {
-    Write-Host "=====================================================" -ForegroundColor Cyan
-    Write-Host "        Azure Privileged Identity Management CLI     " -ForegroundColor Cyan
-    Write-Host "=====================================================" -ForegroundColor Cyan
+    Write-Host "=====================================================" -ForegroundColor 'Cyan'
+    Write-Host "        Azure Privileged Identity Management CLI     " -ForegroundColor 'Cyan'
+    Write-Host "=====================================================" -ForegroundColor 'Cyan'
     Write-Host ""
 }
 
@@ -349,12 +376,16 @@ function Invoke-PimRequestApproval {
     $selectedRequest = $requests[[int]$selection - 1]
     $pimRequestDetailsParams = @{
         CreatedOn = $selectedRequest.properties.createdOn
+        Duration = if ([string]::IsNullOrEmpty($selectedRequest.properties.scheduleInfo.expiration.duration)) { 'N/A' } else { $selectedRequest.properties.scheduleInfo.expiration.duration }
         Justification = $selectedRequest.properties.justification
         PrincipalName = $selectedRequest.properties.expandedProperties.principal.displayName
         ResourceName = $selectedRequest.properties.expandedProperties.scope.displayName
         ResourceType = $selectedRequest.properties.expandedProperties.scope.type
         RoleDefinitionName = $selectedRequest.properties.expandedProperties.roleDefinition.displayName
+        StartDateTime = if ($selectedRequest.properties.scheduleInfo.startDateTime) { $selectedRequest.properties.scheduleInfo.startDateTime } else { 'Immediate' }
         Status = $selectedRequest.properties.status
+        TicketNumber = if ([string]::IsNullOrEmpty($selectedRequest.properties.ticketInfo.ticketNumber)) { 'N/A' } else { $selectedRequest.properties.ticketInfo.ticketNumber }
+        TicketSystem = if ([string]::IsNullOrEmpty($selectedRequest.properties.ticketInfo.ticketSystem)) { 'N/A' } else { $selectedRequest.properties.ticketInfo.ticketSystem }
     }
     
     # Show detailed information about the selected request
