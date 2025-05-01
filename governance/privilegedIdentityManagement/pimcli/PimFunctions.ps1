@@ -354,14 +354,11 @@ function Invoke-PimRequestApproval {
         Write-Host "    Principal: $($requests[$i].properties.expandedProperties.principal.displayName)" -ForegroundColor 'White'
         Write-Host "    Role: $($requests[$i].properties.expandedProperties.roleDefinition.displayName)" -ForegroundColor 'White'
         Write-Host "    Requested on: $($requests[$i].properties.createdOn)" -ForegroundColor 'White'
-        Write-Host "    Requested duration: $(if ([string]::IsNullOrEmpty($requests[$i].properties.scheduleInfo.expiration.duration)) { 'N/A' } else { $requests[$i].properties.scheduleInfo.expiration.duration })" -ForegroundColor 'White'
-        Write-Host "    Ticket number: $(if ([string]::IsNullOrEmpty($requests[$i].properties.ticketInfo.ticketNumber)) { 'N/A' } else { $requests[$i].properties.ticketInfo.ticketNumber })" -ForegroundColor 'White'
         Write-Host "    Justification: $($requests[$i].properties.justification)" -ForegroundColor 'White'
         Write-Host ""
     }
     
-    Write-Host "Enter request number to view details and approve (or C to return to menu):" -ForegroundColor 'Yellow'
-    $selection = Read-Host
+    $selection = Read-Host -Prompt 'Enter request number to view details and approve (or C to return to menu)'
     
     if ($selection -eq "C") {
         return
@@ -392,19 +389,18 @@ function Invoke-PimRequestApproval {
     Clear-Host
     Show-AzPimRequestDetails @pimRequestDetailsParams
     
-    Write-Host "Action options:" -ForegroundColor Yellow
-    Write-Host "Y - Approve the request" -ForegroundColor Green
-    Write-Host "N - Reject the request" -ForegroundColor Red
-    Write-Host "C - Cancel and return to request list" -ForegroundColor Cyan
+    Write-Host "Action options:" -ForegroundColor 'Yellow'
+    Write-Host "Y - Approve the request" -ForegroundColor 'Green'
+    Write-Host "N - Reject the request" -ForegroundColor 'Red'
+    Write-Host "C - Cancel and return to main menu" -ForegroundColor 'Cyan'
     Write-Host ""
-    Write-Host "What would you like to do? (Y/N/C)" -ForegroundColor Yellow
-    $action = Read-Host
+    $action = Read-Host -Prompt 'What would you like to do? (Y/N/C)'
     
     switch ($action.ToUpper()) {
         "Y" {
-            Write-Host "Please provide a justification for this approval:" -ForegroundColor Yellow
-            $reason = Read-Host
-            
+            $reason = Read-Host -Prompt 'Please provide a justification for this approval'
+
+            # TODO: Think about what to do when a reason is not provided.
             if ([string]::IsNullOrWhiteSpace($reason)) {
                 $reason = "Approved by PIM CLI tool"
             }
@@ -412,16 +408,16 @@ function Invoke-PimRequestApproval {
             $result = New-AzPimDecisionRequest -ApprovalId $selectedRequest.properties.approvalId -Reason $reason -ReviewResult 'Approve'
             
             if ($result) {
-                Write-Host "Request approved successfully." -ForegroundColor Green
+                Write-Host "Request approved successfully." -ForegroundColor 'Green'
             }
             else {
-                Write-Host "Failed to approve request." -ForegroundColor Red
+                Write-Host "Failed to approve request." -ForegroundColor 'Red'
             }
         }
         "N" {
-            Write-Host "Please provide a reason for rejecting this request:" -ForegroundColor Yellow
-            $reason = Read-Host
+            $reason = Read-Host -Prompt 'Please provide a reason for rejecting this request'
             
+            # TODO: Think about what to do when a reason is not provided.
             if ([string]::IsNullOrWhiteSpace($reason)) {
                 $reason = "Rejected by PIM CLI tool"
             }
@@ -480,7 +476,7 @@ function Start-PimCli {
             }
         }
         
-        Start-Sleep 10
+        Start-Sleep 5
 
         # Main menu loop
         $exit = $false
