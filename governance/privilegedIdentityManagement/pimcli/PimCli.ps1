@@ -87,10 +87,10 @@ function Invoke-PimRequestApproval {
         Write-Host ""
     }
     
-    Write-Host "Enter request number to view details and approve (or 0 to return to menu):" -ForegroundColor Yellow
+    Write-Host "Enter request number to view details and approve (or C to return to menu):" -ForegroundColor Yellow
     $selection = Read-Host
     
-    if ($selection -eq "0") {
+    if ($selection -eq "C") {
         return
     }
     
@@ -132,7 +132,7 @@ function Invoke-PimRequestApproval {
                 $reason = "Approved by PIM CLI tool"
             }
             
-            $result = Approve-AzPimRequest -RequestId $selectedRequest.properties.approvalId -Reason $reason
+            $result = New-AzPimDecisionRequest -ApprovalId $selectedRequest.properties.approvalId -Reason $reason -ReviewResult 'Approve'
             
             if ($result) {
                 Write-Host "Request approved successfully." -ForegroundColor Green
@@ -149,7 +149,7 @@ function Invoke-PimRequestApproval {
                 $reason = "Rejected by PIM CLI tool"
             }
             
-            $result = Reject-AzPimRequest -RequestId $selectedRequest.id -Reason $reason
+            $result = New-AzPimDecisionRequest -ApprovalId $selectedRequest.properties.approvalId -Reason $reason -ReviewResult 'Deny'
             
             if ($result) {
                 Write-Host "Request rejected successfully." -ForegroundColor Green
@@ -161,6 +161,7 @@ function Invoke-PimRequestApproval {
         "C" {
             Write-Host "Returning to request list..." -ForegroundColor Cyan
             # No action needed, will fall through to continue
+            return
         }
         default {
             Write-Host "Invalid option. Returning to request list..." -ForegroundColor Yellow

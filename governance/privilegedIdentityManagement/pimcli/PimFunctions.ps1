@@ -132,19 +132,8 @@ function Disconnect-AzPim {
 
 # PIM Request Functions
 function Get-AzPimRequests {
-    <#
-    .SYNOPSIS
-        Gets pending PIM requests.
-    .DESCRIPTION
-        Retrieves a list of pending requests in Azure Privileged Identity Management.
-    .EXAMPLE
-        Get-AzPimRequests
-    .OUTPUTS
-        Array of PIM requests
-    #>
     [CmdletBinding()]
     param()
-    
     try {
         Write-Host "Retrieving pending PIM requests..." -ForegroundColor Cyan
         
@@ -171,7 +160,7 @@ function New-AzPimDecisionRequest {
     param(
         [Parameter(Mandatory = $true,
             HelpMessage = 'Unique identifier for the approval.')]
-        [System.System]$ApprovalId,
+        [System.String]$ApprovalId,
         
         [Parameter(Mandatory = $true,
             HelpMessage = 'Justification for the approval.')]
@@ -188,7 +177,7 @@ function New-AzPimDecisionRequest {
         [System.String]$apiVersion = '2021-01-01-preview'
 
         # Retrieve the Azure access token to support te requests.
-        [System.SecureString]$token = (Get-AzAccessToken -AsSecureString).Token
+        [securestring]$token = (Get-AzAccessToken -AsSecureString).Token
     }
     process {
         try {    
@@ -202,26 +191,32 @@ function New-AzPimDecisionRequest {
             [System.String]$approvalDecisionUri = $baseUri + ($approvalSteps.value[0].id) + "?api-version=$apiVersion"
     
             # Prepare the request body for the decision request.
-            [System.Hashtable]$body = @{
-                justification = $Reason
-                reviewResult  = $ReviewResult
+            [System.Object]$body = @{
+                properties = @{
+                    justification = $Reason
+                    reviewResult  = $ReviewResult
+                }
             } | ConvertTo-Json
+            Write-Host $body
             
-            [System.Hashtable] $approvalDecisionParams = @{
+            # Send the decision for the approval request to the PIM API.
+            [hashtable] $approvalDecisionParams = @{
                 Method = 'PUT'
                 Uri = $approvalDecisionUri
                 Body = $body
                 Authentication = 'Bearer'
                 Token = $token
+                ContentType = 'application/json'
             }
             [System.Object]$approvalDecision = Invoke-RestMethod @approvalDecisionParams
-            
+            Write-Host $approvalDecision
             
             Write-Host "Successfully approved PIM request." -ForegroundColor Green
             return $true
         }
         catch {
             Write-Error "Failed to approve PIM request: $_"
+            throw $_
             return $false
         }
     }
