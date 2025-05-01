@@ -1,5 +1,3 @@
-#Requires -Modules Az.Accounts, Az.Resources
-
 <#
 .SYNOPSIS
     Functions for Azure Privileged Identity Management (PIM) operations.
@@ -7,24 +5,13 @@
     This module provides functions to interact with Azure Privileged Identity Management,
     including authentication and approval of PIM requests.
 .NOTES
-    Version:        1.0.0
-    Author:         GitHub Copilot
+    Version:        0.0.1
+    Author:         Bjorn Peters
     Creation Date:  2025-04-30
 #>
 
 # Authentication Functions
 function Connect-AzPim {
-    <#
-    .SYNOPSIS
-        Authenticates to Azure and verifies access to PIM.
-    .DESCRIPTION
-        Authenticates the user to Azure using Az PowerShell module and verifies
-        that the user has access to Privileged Identity Management.
-    .EXAMPLE
-        Connect-AzPim
-    .OUTPUTS
-        PSObject with authentication status and context
-    #>
     [CmdletBinding()]
     param()
     
@@ -135,9 +122,17 @@ function Get-AzPimRequests {
     [CmdletBinding()]
     param()
     try {        
-        $pendingRequestsUri = 'https://management.azure.com/providers/Microsoft.Authorization/roleAssignmentScheduleRequests?api-version=2022-04-01-preview&$filter=asApprover()'
-        $pendingRequests = (Invoke-RestMethod -Method 'GET' -Uri $pendingRequestsUri -Authentication 'Bearer' -Token (Get-AzAccessToken -AsSecureString).Token).value
-    
+        [string]$pendingRequestsUri = 'https://management.azure.com/providers/Microsoft.Authorization/roleAssignmentScheduleRequests?api-version=2022-04-01-preview&$filter=asApprover()'
+
+        # Set parameters for the PIM API request.
+        [hashtable]$pendingRequestParams = @{
+            Method = 'GET'
+            Uri =  $pendingRequestsUri
+            Authentication = 'Bearer'
+            Token = (Get-AzAccessToken -AsSecureString).Token
+        }
+        [object]$pendingRequests = (Invoke-RestMethod @pendingRequestParams).value
+        
         if ($pendingRequests -and $pendingRequests.Count -gt 0) {
             return [array]$pendingRequests
         }
@@ -156,21 +151,21 @@ function New-AzPimDecisionRequest {
     param(
         [Parameter(Mandatory = $true,
             HelpMessage = 'Unique identifier for the approval.')]
-        [System.String]$ApprovalId,
+        [string]$ApprovalId,
         
         [Parameter(Mandatory = $true,
             HelpMessage = 'Justification for the approval.')]
-        [System.String]$Reason,
+        [string]$Reason,
 
         [Parameter(Mandatory = $true,
             HelpMessage = 'Justification for the approval.')]
         [ValidateSet('Approve', 'Deny', 'NotReviewed')]
-        [System.String]$ReviewResult
+        [string]$ReviewResult
     )
     begin {
         # Set the basic url for the Privileged Identity Management API and the API version.
-        [System.String]$baseUri = 'https://management.azure.com'
-        [System.String]$apiVersion = '2021-01-01-preview'
+        [string]$baseUri = 'https://management.azure.com'
+        [string]$apiVersion = '2021-01-01-preview'
 
         # Retrieve the Azure access token to support te requests.
         [securestring]$token = (Get-AzAccessToken -AsSecureString).Token
@@ -178,25 +173,24 @@ function New-AzPimDecisionRequest {
     process {
         try {    
             # Get the approval steps first of a single PIM request.
-            [System.String]$approvalStepsUri = $baseUri + "$($ApprovalId)/stages?api-version=$apiVersion"
-            [System.Object]$approvalSteps = Invoke-RestMethod -Method 'GET' -Uri $approvalStepsUri -Authentication 'Bearer' -Token $token
+            [string]$approvalStepsUri = $baseUri + "$($ApprovalId)/stages?api-version=$apiVersion"
+            [object]$approvalSteps = Invoke-RestMethod -Method 'GET' -Uri $approvalStepsUri -Authentication 'Bearer' -Token $token
     
             Write-Host "Sending decision '$ReviewResult' for PIM request $($approvalSteps.value[0].id)..." -ForegroundColor Cyan
 
             # Construct the necessary API call for approving a PIM request
-            [System.String]$approvalDecisionUri = $baseUri + ($approvalSteps.value[0].id) + "?api-version=$apiVersion"
+            [string]$approvalDecisionUri = $baseUri + ($approvalSteps.value[0].id) + "?api-version=$apiVersion"
     
             # Prepare the request body for the decision request.
-            [System.Object]$body = @{
+            [object]$body = @{
                 properties = @{
                     justification = $Reason
                     reviewResult  = $ReviewResult
                 }
             } | ConvertTo-Json
-            Write-Host $body
             
             # Send the decision for the approval request to the PIM API.
-            [hashtable] $approvalDecisionParams = @{
+            [hashtable]$approvalDecisionParams = @{
                 Method = 'PUT'
                 Uri = $approvalDecisionUri
                 Body = $body
@@ -204,11 +198,10 @@ function New-AzPimDecisionRequest {
                 Token = $token
                 ContentType = 'application/json'
             }
-            [System.Object]$approvalDecision = Invoke-RestMethod @approvalDecisionParams
+            [object]$approvalDecision = Invoke-RestMethod @approvalDecisionParams
+
+            # TODO: Remove return object after debugging.
             Write-Host $approvalDecision
-            
-            Write-Host "Successfully approved PIM request." -ForegroundColor Green
-            return $true
         }
         catch {
             Write-Error "Failed to approve PIM request: $_"
@@ -217,7 +210,8 @@ function New-AzPimDecisionRequest {
         }
     }
     end {
-
+        Write-Host "Successfully approved PIM request with status '$($approvalDecision.properties.status)'." -ForegroundColor 'Green'
+        return $true
     }
 }
 
@@ -435,8 +429,8 @@ function Start-PimCli {
         # Authenticate to Azure
         Clear-Host
         Show-Banner
-        Write-Host "Welcome to the Azure PIM CLI tool!" -ForegroundColor Green
-        Write-Host "Authenticating to Azure..." -ForegroundColor Cyan
+        Write-Host "Welcome to the Azure PIM CLI tool!" -ForegroundColor 'Green'
+        Write-Host "Authenticating to Azure..." -ForegroundColor 'Cyan'
         
         $authResult = Connect-AzPim
         
